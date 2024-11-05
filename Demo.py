@@ -1,16 +1,37 @@
 import requests
 import json
 import re
+print("""
+██████╗ ███╗   ██╗███████╗   ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗ ██╗ █████╗ ███╗   ██╗  █████╗    ██╗
+██╔══██╗████╗  ██║██╔════╝  ██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗██║██╔══██╗████╗  ██║ ██╔══██╗   ██║
+██║  ██║██╔██╗ ██║███████╗  ██║  ███╗██║   ██║███████║██████╔╝██║  ██║██║███████║██╔██╗ ██║ ███████║   ██║
+██║  ██║██║╚██╗██║╚════██║  ██║   ██║██║   ██║██╔══██║██╔══██╗██║  ██║██║██╔══██║██║╚██╗██║ ██╔══██║   ██║
+██████╔╝██║ ╚████║███████║  ╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝██║██║  ██║██║ ╚████║ ██║  ██║██╗██║██╗
+╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═╝  ╚═╝╚═╝╚═╝╚═╝
+                                                                                                    """)
+
+# Choose the model
+while True:
+    print("Choose the model to use (currently only Meta-Llama-3-8B is supported): ") 
+    print("(1) Meta-Llama-3-8B")
+    print("To be added...")
+    answer= input()
+    if (answer=="1"):
+        model="Meta-Llama-3-8B-Instruct.Q4_0.gguf"
+        break
+    else:
+        print("not a valid model")
+
 while True:
     # Define the API endpoint
     api_url = 'http://localhost:4891/v1/chat/completions'
-
+        
     # Get user input for the website
     website = input("Enter the website to check (e.g., 'google.com'): ")
 
     # Define the payload with the dynamic website input
     payload = {
-        "model": "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
+        "model": model,
         "messages": [
             {"role": "user", "content": f"Is the website {website} malicious? Please answer with yes or no."}
         ],
