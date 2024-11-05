@@ -1,8 +1,6 @@
 import requests
 import json
 import re
-
-#ASCII banner
 print("""
 ██████╗ ███╗   ██╗███████╗   ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗ ██╗ █████╗ ███╗   ██╗  █████╗    ██╗
 ██╔══██╗████╗  ██║██╔════╝  ██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗██║██╔══██╗████╗  ██║ ██╔══██╗   ██║
@@ -11,17 +9,23 @@ print("""
 ██████╔╝██║ ╚████║███████║  ╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝██║██║  ██║██║ ╚████║ ██║  ██║██╗██║██╗
 ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═╝  ╚═╝╚═╝╚═╝╚═╝
                                                                                                     """)
+
+# Define the getmodel function
+def getmodel():
+    while True:
+        print("Choose the model to use (currently only Meta-Llama-3-8B is supported): ") 
+        print("(1) Meta-Llama-3-8B")
+        print("To be added...")
+        answer= input()
+        if (answer=="1"):
+            model="Meta-Llama-3-8B-Instruct.Q4_0.gguf"
+            break
+        else:
+            print("Not a valid model")
+
 # Choose the model
-while True:
-    print("Choose the model to use (currently only Meta-Llama-3-8B is supported): ") 
-    print("(1) Meta-Llama-3-8B")
-    print("To be added...")
-    answer= input()
-    if (answer=="1"):
-        model="Meta-Llama-3-8B-Instruct.Q4_0.gguf"
-        break
-    else:
-        print("not a valid model")
+getmodel()
+#model="YOUR_CUSTOM_MODEL"
 
 while True:
     # Define the API endpoint
