@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 # CONFIG
 MODEL = "Meta-Llama-3-8B-Instruct.Q4_0.gguf"
-API_URL = "https://gpt4all.110370.xyz/v1/chat/completions"
+API_URL = "http://localhost:4891/v1/chat/completions"
 
 # -------------------- DNS HELPERS --------------------
 
