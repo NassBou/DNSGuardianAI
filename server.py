@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 WHITELIST_FILE = "whitelist.txt"
 BLACKLIST_FILE = "blacklist.txt"
 LOG_FILE = "queries.log"
-UPSTREAM_DNS_PORT = 52
+UPSTREAM_DNS_PORT = 53
 UPSTREAM_DNS = ("1.1.1.1", UPSTREAM_DNS_PORT)
 
 # ----------------- Utility Functions -----------------
