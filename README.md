@@ -14,3 +14,5 @@ This demo uses GPT4All and the Meta Llama-3 8B model so GPT4All should be runnin
 
 Different/custom models can be loaded by removing the call for getmodel() and adding the model name in the line: 
 model="YOUR_CUSTOM_MODEL"
+
+You can start DNSGuardianAI by running server.py.
