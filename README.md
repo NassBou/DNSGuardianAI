@@ -10,11 +10,8 @@
 DNSGuardianAI is an AI-powered tool designed to detect potentially harmful DNS queries.
 
 🚀 How to Run
-Start GPT4All
 
-Ensure GPT4All is running with the Local API Server enabled (default: http://localhost:4891) or use a custom LLM API.
-
-Run the App
+Ensure GPT4All is running with the Local API Server enabled (default: http://localhost:4891) or use the URL of a custom LLM API.
 
 Launch DNSGuardianAI by running:
 
@@ -26,6 +23,7 @@ This will start both:
 - The Web Dashboard (available at http://localhost:5000)
 
 Configuration
+
 You can configure models, DNS ports, upstream DNS, and filtering behavior via:
 
 - The config/config.json file, or
@@ -34,7 +32,7 @@ You can configure models, DNS ports, upstream DNS, and filtering behavior via:
 
 ⚙️ Features
 
--LLM-based domain analysis with secondary checks:
+- LLM-based domain analysis with secondary checks:
   - WHOIS-based age registration
   - SSL certificate (SAN) validation
   - Broken link detection
