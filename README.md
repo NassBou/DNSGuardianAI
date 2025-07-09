@@ -11,9 +11,9 @@ DNSGuardianAI is an AI-powered tool designed to detect potentially harmful DNS q
 
 🚀 How to Run
 
-Ensure GPT4All is running with the Local API Server enabled (default: http://localhost:4891) or use the URL of a custom LLM API.
+- Ensure GPT4All is running with the Local API Server enabled (default: http://localhost:4891) or use the URL of a custom LLM API.
 
-Launch DNSGuardianAI by running:
+- Launch DNSGuardianAI by running:
 
 ```python3 server.py ```
 
@@ -31,7 +31,6 @@ You can configure models, DNS ports, upstream DNS, and filtering behavior via:
 - The integrated Web UI
 
 ⚙️ Features
-
 - LLM-based domain analysis with secondary checks:
   - WHOIS-based age registration
   - SSL certificate (SAN) validation
