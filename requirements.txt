@@ -5,3 +5,4 @@ tldextract
 dnstwist
 dnspython
 bs4
+cryptography
