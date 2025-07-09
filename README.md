@@ -15,7 +15,7 @@ Ensure GPT4All is running with the Local API Server enabled (default: http://loc
 
 Launch DNSGuardianAI by running:
 
-```plaintext python3 server.py ```
+```python3 server.py ```
 
 This will start both:
 
