@@ -4,8 +4,8 @@ from dnslib.server import DNSServer
 from filtering_resolver import FilteringResolver
 
 # === CONFIG ===
-MODEL = "Add-Model-Here"
-API_URL = "Add-API_url-Here"
+MODEL = "YOUR_CUSTOM_MODEL"
+API_URL = "YOUR_API_URL"
 UPSTREAM_DNS_PORT = 53
 
 if __name__ == "__main__":
