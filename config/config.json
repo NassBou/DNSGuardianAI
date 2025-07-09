@@ -1,7 +1,7 @@
 {
   "filtering_enabled": true,
-  "model": "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
-  "api_url": "https://gpt4all.110370.xyz/v1/chat/completions",
+  "model": "YOUR_CUSTOM_MODEL",
+  "api_url": "YOUR_API_URL",
   "dns_port": 52,
   "upstream_dns": "1.1.1.1",
   "dns_listen_address": "0.0.0.0",
