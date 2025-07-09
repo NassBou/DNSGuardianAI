@@ -1,5 +1,4 @@
-# simple_verifier.py
-
+# advanced_verifier.py
 import requests
 import ssl
 import socket

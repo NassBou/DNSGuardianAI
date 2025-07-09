@@ -2,15 +2,25 @@
 
 from dnslib.server import DNSServer
 from filtering_resolver import FilteringResolver
-
-# === CONFIG ===
-MODEL = "YOUR_CUSTOM_MODEL"
-API_URL = "YOUR_API_URL"
-UPSTREAM_DNS_PORT = 53
+from settings import config
+from app import Dashboard
+from threading import Thread
 
 if __name__ == "__main__":
-    resolver = FilteringResolver(model=MODEL, api_url=API_URL)
-    server = DNSServer(resolver, port=UPSTREAM_DNS_PORT, address="0.0.0.0")
+    # Load all config values
+    filtering_enabled = config["filtering_enabled"]
+    model = config["model"]
+    api_url = config["api_url"]
+    port = config["dns_port"]
+    upstream_dns = config ["upstream_dns"]
+    threshold = config["broken_link_threshold"]
+
+    # Launch dashboard
+    Thread(target=lambda: Dashboard().start(), daemon=True).start()
+
+    # Pass all necessary values to FilteringResolver
+    resolver = FilteringResolver(filtering_enabled=filtering_enabled, model=model, api_url=api_url, threshold=threshold, port=port, upstream_dns=upstream_dns)
+    server = DNSServer(resolver, port=port)
     print("""
 ██████╗ ███╗   ██╗███████╗   ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗ ██╗ █████╗ ███╗   ██╗   █████╗ ██╗
 ██╔══██╗████╗  ██║██╔════╝  ██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗██║██╔══██╗████╗  ██║  ██╔══██╗██║
@@ -20,5 +30,5 @@ if __name__ == "__main__":
 ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═╝  ╚═╝╚═╝
                                                                                                     """)
 
-    print(f"DNS Guardian listening on port {UPSTREAM_DNS_PORT}...")
+    print(f"DNS Guardian listening on port {port}...")
     server.start()

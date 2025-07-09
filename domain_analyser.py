@@ -15,8 +15,9 @@ BLACKLIST_FILE = "blacklist.txt"
 RESERVED_TLDS = {"localhost", "test", "example", "invalid", "home", "local", "corp", "internal", "onion" }
 
 class DomainAnalyser:
-    def __init__(self, model: str, api_url: str):
+    def __init__(self, model: str, api_url: str, threshold: int = 1):
         self.llm = LLMClient(model=model, api_url=api_url)
+        self.threshold = threshold
 
     def is_reserved_tld(self, domain: str) -> bool:
         domain = domain.strip().lower()
@@ -61,7 +62,7 @@ class DomainAnalyser:
         # Broken link check
         try:
             broken_links = find_broken_links(f"http://{base_qname}")
-            if len(broken_links) > threshold:
+            if len(broken_links) > self.threshold:
                 self.add_to_blacklist(base_qname)
                 return {
                     "verdict": "block",
