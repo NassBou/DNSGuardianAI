@@ -34,7 +34,7 @@ You can configure models, DNS ports, upstream DNS, and filtering behavior via:
   - SSL certificate (SAN) validation
   - Broken link detection
 - Configurable Whitelists & Blacklists
-Manually or automatically maintain lists for trusted and blocked domains to improve performance and skip redundant checks.
+  - Manually or automatically maintain lists for trusted and blocked domains to improve performance and skip redundant checks.
 - Web dashboard with:
   - Live statistics and log viewer
   - Editable configuration (models, ports, DNS settings, etc.)
