@@ -30,7 +30,7 @@ You can configure models, DNS ports, upstream DNS, and filtering behavior via:
 
 ⚙️ Features
 - LLM-based domain analysis with secondary checks:
-  - WHOIS-based age registration
+  - WHOIS-based domain age registration
   - SSL certificate (SAN) validation
   - Broken link detection
 - Configurable Whitelists & Blacklists
