@@ -1,5 +1,6 @@
 # domain_analyser.py
 
+
 import requests
 from bs4 import BeautifulSoup
 from llm_client import LLMClient
@@ -29,7 +30,7 @@ class DomainAnalyser:
 
     def analyse(self, base_qname: str, threshold=4) -> dict:
 
-        #Don't bother analysing reserved TLDs
+#------------------------- DON'T BOTHER ANALYSING RESERVED TLDs -------------------------
         if self.is_reserved_tld(base_qname):
             return {
                 "verdict": "allow",
@@ -48,8 +49,8 @@ class DomainAnalyser:
                 "verdict": "allow",
                 "reason": "LLM marked as Safe"
             }
-
-        # WHOIS check
+            
+#-------------------------WHOIS CHECK -------------------------
         created = get_domain_creation_date(base_qname)
         if is_recent_domain(created):
             self.add_to_blacklist(base_qname)
@@ -58,8 +59,8 @@ class DomainAnalyser:
                 "reason": f"Domain recently registered ({created})",
                 "source": "whois"
             }
-
-        # Broken link check
+            
+#-----------------------BROKEN LINK CHECK -----------------------
         try:
             broken_links = find_broken_links(f"http://{base_qname}")
             if len(broken_links) > self.threshold:
@@ -83,13 +84,14 @@ class DomainAnalyser:
                 "source": "san"
             }
 
-        # All checks passed
+#-----------------------ALL CHECKS PASSED -----------------------
         self.add_to_whitelist(base_qname)
         return {
             "verdict": "allow",
             "reason": "Passed all secondary checks"
         }
 
+#-----------------------GET WEBSITE TITLE-----------------------
     def fetch_title(self, domain: str) -> str:
         try:
             url = f"http://{domain}"
@@ -99,6 +101,7 @@ class DomainAnalyser:
         except Exception:
             return ""
 
+#-----------------------LIST MANAGEMENT -----------------------
     def add_to_whitelist(self, domain):
         self._update_list_file(WHITELIST_FILE, domain, label="WHITELIST")
 
