@@ -1,6 +1,5 @@
 # domain_analyser.py
 
-
 import requests
 from bs4 import BeautifulSoup
 from llm_client import LLMClient
