@@ -33,10 +33,12 @@ class FilteringResolver(BaseResolver):
     def resolve(self, request, handler):
         qname = str(request.q.qname).rstrip('.').lower()
 
+# ----------------- CHECK IF FORWARD ONLY MODE IS ON -----------------
         if not self.filtering_enabled:
             print(f"[FORWARD ONLY MODE] {qname}")
             return self.forward(request)
-
+# ----------------- IF FORWARD ONLY MODE IS ON STOP HERE -----------------
+        
         if qname.endswith(".in-addr.arpa"):
             self.log_query(qname, "allow")
             return self.forward(request)
@@ -55,28 +57,27 @@ class FilteringResolver(BaseResolver):
         if base_qname in blacklist:
             print(f"[BLACKLIST] {base_qname} is blacklisted — blocking immediately.")
             reply = request.reply()
-            reply.header.rcode = 3  # NXDOMAIN
+            reply.header.rcode = 3
             self.log_query(qname, "block")
             return reply
      
-        #If list only filtering is enabled now you can forward the domain
         if self.list_only_filtering_enabled:
             print(f"[LIST-ONLY MODE] {qname} not found in lists — forwarding")
             self.log_query(qname, "allow")
             return self.forward(request)
+    # -------- IF FORWARD LIST-ONLY MODE MODE IS ON STOP HERE ---------
+        
 
-        #-------------------------FURTHER ANALYSIS-------------------------
+    #-------------------------FURTHER ANALYSIS-------------------------
 
-        # Prevent duplicate concurrent analysis
+    # Prevent duplicate concurrent analysis
         with self.lock:
             if base_qname in self.in_progress:
                 print(f"[SKIP] Analysis already in progress for {base_qname}")
                 reply = request.reply()
-                reply.header.rcode = 2  # SERVFAIL
+                reply.header.rcode = 2
                 return reply
             self.in_progress.add(base_qname)
-
-
         try:
             analysis = self.analyser.analyse(base_qname)
         finally:
@@ -102,6 +103,7 @@ class FilteringResolver(BaseResolver):
             self.log_query(qname, "block")
             return reply
 
+    #------------------------- DNS FORWARDING -------------------------
     def forward(self, request):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -111,9 +113,10 @@ class FilteringResolver(BaseResolver):
         except Exception as e:
             print("Upstream error:", e)
             reply = request.reply()
-            reply.header.rcode = 2  # SERVFAIL
+            reply.header.rcode = 2
             return reply
 
+    #------------------------- LOGGING -------------------------
     def log_query(self, qname, verdict):
         try:
             with open(LOG_FILE, "a") as f:
