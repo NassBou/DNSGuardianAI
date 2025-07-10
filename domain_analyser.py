@@ -1,5 +1,6 @@
 # domain_analyser.py
 
+import os
 import requests
 from bs4 import BeautifulSoup
 from llm_client import LLMClient
@@ -10,8 +11,11 @@ from simple_verifier import (
     find_broken_links
 )
 
-WHITELIST_FILE = "whitelist.txt"
-BLACKLIST_FILE = "blacklist.txt"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_DIR = os.path.join(BASE_DIR, "config")
+
+WHITELIST_FILE = os.path.join(CONFIG_DIR, "whitelist.txt")
+BLACKLIST_FILE = os.path.join(CONFIG_DIR, "blacklist.txt")
 RESERVED_TLDS = {"localhost", "test", "example", "invalid", "home", "local", "corp", "internal", "onion" }
 
 class DomainAnalyser:

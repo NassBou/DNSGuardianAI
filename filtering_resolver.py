@@ -16,7 +16,7 @@ BLACKLIST_FILE = os.path.join(CONFIG_DIR, "blacklist.txt")
 LOG_FILE = os.path.join(CONFIG_DIR, "queries.log")
 
 class FilteringResolver(BaseResolver):
-    def __init__(self, filtering_enabled:bool, list_only_filtering_enabled:bool, model: str, api_url: str, threshold: int, port: int, upstream_dns: str):
+    def __init__(self, filtering_enabled:bool, list_only_filtering_enabled:bool, model: str, api_url: str, threshold: int, upstream_dns: str):
         self.filtering_enabled = filtering_enabled
         self.list_only_filtering_enabled = list_only_filtering_enabled
         self.analyser = DomainAnalyser(
@@ -24,7 +24,7 @@ class FilteringResolver(BaseResolver):
             api_url=api_url,
             threshold=threshold
         )
-        self.port = port
+        self.port = 53
         self.upstream_dns = upstream_dns 
         self.in_progress = set()
         self.lock = threading.Lock()

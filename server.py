@@ -28,7 +28,7 @@ if __name__ == "__main__":
     Thread(target=lambda: Dashboard().start(), daemon=True).start()
 
 # ----------------- START THE SERVER ----------------------
-    resolver = FilteringResolver(filtering_enabled=filtering_enabled, list_only_filtering_enabled=list_only_filtering_enabled, model=model, api_url=api_url, threshold=threshold, port=port, upstream_dns=upstream_dns)
+    resolver = FilteringResolver(filtering_enabled=filtering_enabled, list_only_filtering_enabled=list_only_filtering_enabled, model=model, api_url=api_url, threshold=threshold, upstream_dns=upstream_dns)
     server = DNSServer(resolver, port=port)
     print("""
 ██████╗ ███╗   ██╗███████╗   ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗ ██╗ █████╗ ███╗   ██╗   █████╗ ██╗
