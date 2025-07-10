@@ -83,8 +83,9 @@ class LLMClient:
         )
 
         return self._call_llm(prompt)
+        
 
-    # DNS helpers
+# ----------------- DNS HELPERS ----------------- 
     def _get_base_domain(self, domain: str) -> str:
         ext = tldextract.extract(domain)
         return f"{ext.domain}.{ext.suffix}" if ext.suffix else domain
