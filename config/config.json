@@ -3,7 +3,7 @@
   "advanced_analysis_enabled": true,
   "model": "YOUR_CUSTOM_MODEL",
   "api_url": "YOUR_API_URL",
-  "dns_port": 52,
+  "dns_port": 53,
   "upstream_dns": "1.1.1.1",
   "dns_listen_address": "0.0.0.0",
   "broken_link_threshold": 4,
