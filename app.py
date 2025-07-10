@@ -204,7 +204,6 @@ class Dashboard:
         def dashboard():
             config = load_config()
             config.setdefault("blacklist_urls", [])
-            config.setdefault("list_only_filtering_enabled", False)  # default if missing
             stats = self.get_log_stats(LOG_FILE)
 
             if request.method == "POST":
