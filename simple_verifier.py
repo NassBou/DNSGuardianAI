@@ -61,7 +61,7 @@ def is_recent_domain(created_date, months=6):
     age = now - created_date
     return age.days < (months * 30)
 
-#---------------------Site Elements--------------------------------------------
+#---------------------SITE ELEMENTS--------------------------------------------
 def is_valid_url(url):
     try:
         result = urlparse(url)
