@@ -35,6 +35,7 @@ You can configure models, DNS ports, upstream DNS, and filtering behavior via:
   - Broken link detection
 - Configurable Whitelists & Blacklists
   - Manually or automatically maintain lists for trusted and blocked domains to improve performance and skip redundant checks.
+  - Use already available public blacklists by adding their URLs to maintain and update blocked domains automatically.
 - Web dashboard with:
   - Live statistics and log viewer
   - Editable configuration (models, ports, DNS settings, etc.)
