@@ -65,12 +65,12 @@ class FilteringResolver(BaseResolver):
             print(f"[LIST-ONLY MODE] {qname} not found in lists — forwarding")
             self.log_query(qname, "allow")
             return self.forward(request)
-    # -------- IF FORWARD LIST-ONLY MODE MODE IS ON STOP HERE ---------
+# -------- IF FORWARD LIST-ONLY MODE MODE IS ON STOP HERE ---------
         
 
-    #-------------------------FURTHER ANALYSIS-------------------------
+#------------------------FURTHER ANALYSIS-------------------------
 
-    # Prevent duplicate concurrent analysis
+        #Prevent duplicate concurrent analysis
         with self.lock:
             if base_qname in self.in_progress:
                 print(f"[SKIP] Analysis already in progress for {base_qname}")
@@ -103,7 +103,7 @@ class FilteringResolver(BaseResolver):
             self.log_query(qname, "block")
             return reply
 
-    #------------------------- DNS FORWARDING -------------------------
+#------------------------- DNS FORWARDING -------------------------
     def forward(self, request):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -116,7 +116,7 @@ class FilteringResolver(BaseResolver):
             reply.header.rcode = 2
             return reply
 
-    #------------------------- LOGGING -------------------------
+#------------------------- LOGGING -------------------------
     def log_query(self, qname, verdict):
         try:
             with open(LOG_FILE, "a") as f:
