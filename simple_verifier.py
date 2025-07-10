@@ -1,4 +1,5 @@
-# advanced_verifier.py
+# simple_verifier.py
+
 import requests
 import ssl
 import socket
@@ -61,7 +62,7 @@ def is_recent_domain(created_date, months=6):
     age = now - created_date
     return age.days < (months * 30)
 
-#---------------------SITE ELEMENTS--------------------------------------------
+#--------------------- SITE ELEMENTS -----------------
 def is_valid_url(url):
     try:
         result = urlparse(url)
