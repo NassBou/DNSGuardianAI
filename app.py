@@ -118,6 +118,11 @@ TEMPLATE = """
     </div>
 
     <div>
+      <label><strong>Dashboard Port:</strong></label><br>
+      <input name="dashboard_port" type="number" value="{{ config.dashboard_port }}">
+    </div>
+
+    <div>
       <label><strong>Broken Link Threshold:</strong></label><br>
       <input name="broken_link_threshold" type="number" value="{{ config.broken_link_threshold }}">
     </div>
@@ -213,17 +218,16 @@ class Dashboard:
                     config["model"] = request.form["model"]
                     config["api_url"] = request.form["api_url"]
                     config["dns_port"] = int(request.form["dns_port"])
+                    config["dashboard_port"] = int(request.form["dashboard_port"])  # New line
                     config["upstream_dns"] = request.form["upstream_dns"]
                     config["dns_listen_address"] = request.form["dns_listen_address"]
                     config["broken_link_threshold"] = int(request.form["broken_link_threshold"])
 
-                    # Add new blacklist URL
                     new_url = request.form.get("new_blacklist_url", "").strip()
                     if new_url and new_url not in config["blacklist_urls"]:
                         config["blacklist_urls"].append(new_url)
                         flash("✅ New blacklist URL added.")
 
-                    # Add new whitelisted domain
                     new_domain = request.form.get("new_whitelist_domain", "").strip().lower()
                     if new_domain:
                         if os.path.exists(WHITELIST_FILE):
@@ -281,5 +285,7 @@ class Dashboard:
             pass
         return {"allowed": allowed, "blocked": blocked, "total": allowed + blocked}
 
-    def start(self, host="0.0.0.0", port=5000):
-        self.app.run(host=host, port=port, debug=False, use_reloader=False)
+    def start(self, host="0.0.0.0", port=None):
+        config = load_config()
+        actual_port = port or config.get("dashboard_port", 5000)
+        self.app.run(host=host, port=actual_port, debug=False, use_reloader=False)
