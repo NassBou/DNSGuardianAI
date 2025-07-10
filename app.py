@@ -1,5 +1,3 @@
-# app.py
-
 from flask import Flask, render_template_string, request, redirect, url_for, flash
 from settings import load_config, save_config
 import os
@@ -9,7 +7,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 
 LOG_FILE = os.path.join(CONFIG_DIR, "queries.log")
-LOG_PATH = os.path.join(os.path.dirname(__file__), 'queries.log')
+WHITELIST_FILE = os.path.join(CONFIG_DIR, "whitelist.txt")
 
 TEMPLATE = """
 <!doctype html>
@@ -21,7 +19,7 @@ TEMPLATE = """
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f9f9f9;
       padding: 40px;
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
     }
     h1 {
@@ -39,7 +37,7 @@ TEMPLATE = """
       border: 1px solid #ccc;
       border-radius: 4px;
     }
-    input[type="submit"] {
+    input[type="submit"], button {
       background-color: #4CAF50;
       color: white;
       padding: 10px 20px;
@@ -48,7 +46,7 @@ TEMPLATE = """
       cursor: pointer;
       font-weight: bold;
     }
-    input[type="submit"]:hover {
+    input[type="submit"]:hover, button:hover {
       background-color: #45a049;
     }
     .nav-link {
@@ -96,32 +94,32 @@ TEMPLATE = """
   ">
     <div>
       <label><strong>Model:</strong></label><br>
-      <input name="model" value="{{ config.model }}" style="width: 100%;">
+      <input name="model" value="{{ config.model }}">
     </div>
 
     <div>
       <label><strong>API URL:</strong></label><br>
-      <input name="api_url" value="{{ config.api_url }}" style="width: 100%;">
+      <input name="api_url" value="{{ config.api_url }}">
     </div>
 
     <div>
       <label><strong>Upstream DNS IP:</strong></label><br>
-      <input name="upstream_dns" value="{{ config.upstream_dns }}" style="width: 100%;">
+      <input name="upstream_dns" value="{{ config.upstream_dns }}">
     </div>
 
     <div>
       <label><strong>Listen Address:</strong></label><br>
-      <input name="dns_listen_address" value="{{ config.dns_listen_address }}" style="width: 100%;">
+      <input name="dns_listen_address" value="{{ config.dns_listen_address }}">
     </div>
 
     <div>
       <label><strong>DNS Port:</strong></label><br>
-      <input name="dns_port" type="number" value="{{ config.dns_port }}" style="width: 90%;">
+      <input name="dns_port" type="number" value="{{ config.dns_port }}">
     </div>
 
     <div>
       <label><strong>Broken Link Threshold:</strong></label><br>
-      <input name="broken_link_threshold" type="number" value="{{ config.broken_link_threshold }}" style="width: 100%;">
+      <input name="broken_link_threshold" type="number" value="{{ config.broken_link_threshold }}">
     </div>
 
     <div style="grid-column: span 2;">
@@ -132,19 +130,33 @@ TEMPLATE = """
       </label>
     </div>
 
+    <div style="grid-column: span 2;">
+      <label>
+        <input type="checkbox" name="advanced_analysis_enabled" value="1"
+          {% if config.advanced_analysis_enabled %}checked{% endif %}>
+        <strong>Enable Advanced Analysis</strong>
+      </label>
+    </div>
+
+    <div style="grid-column: span 2;">
+      <label><strong>Add Blacklist URL:</strong></label><br>
+      <input name="new_blacklist_url" placeholder="https://example.com/blacklist.txt">
+    </div>
+
+    <div style="grid-column: span 2;">
+      <label><strong>Add Whitelisted Domain:</strong></label><br>
+      <input name="new_whitelist_domain" placeholder="example.com">
+    </div>
+
     <div style="grid-column: span 2; text-align: center;">
-      <button type="submit" style="padding: 10px 25px; font-weight: bold; background: green; color: white; border: none; border-radius: 6px;">
-        💾 Save Settings
-      </button>
+      <button type="submit">💾 Save Settings</button>
     </div>
   </div>
 </form>
 
-
 </body>
 </html>
 """
-
 
 LOG_TEMPLATE = """
 <!doctype html>
@@ -191,19 +203,42 @@ class Dashboard:
         @self.app.route("/", methods=["GET", "POST"])
         def dashboard():
             config = load_config()
+            config.setdefault("blacklist_urls", [])
+            config.setdefault("list_only_filtering_enabled", False)  # default if missing
             stats = self.get_log_stats(LOG_FILE)
 
             if request.method == "POST":
                 try:
                     config["filtering_enabled"] = "filtering_enabled" in request.form
+                    config["advanced_analysis_enabled"] = "advanced_analysis_enabled" in request.form
                     config["model"] = request.form["model"]
                     config["api_url"] = request.form["api_url"]
                     config["dns_port"] = int(request.form["dns_port"])
                     config["upstream_dns"] = request.form["upstream_dns"]
                     config["dns_listen_address"] = request.form["dns_listen_address"]
-                                
+                    config["broken_link_threshold"] = int(request.form["broken_link_threshold"])
+
+                    # Add new blacklist URL
+                    new_url = request.form.get("new_blacklist_url", "").strip()
+                    if new_url and new_url not in config["blacklist_urls"]:
+                        config["blacklist_urls"].append(new_url)
+                        flash("✅ New blacklist URL added.")
+
+                    # Add new whitelisted domain
+                    new_domain = request.form.get("new_whitelist_domain", "").strip().lower()
+                    if new_domain:
+                        if os.path.exists(WHITELIST_FILE):
+                            with open(WHITELIST_FILE, "r") as f:
+                                existing = set(line.strip().lower() for line in f)
+                        else:
+                            existing = set()
+                        if new_domain not in existing:
+                            with open(WHITELIST_FILE, "a") as f:
+                                f.write(new_domain + "\n")
+                            flash("✅ Whitelisted domain added.")
+
                     save_config(config)
-                    flash("Settings saved successfully! Restart the program to apply them.")
+                    flash("⚙️ Settings saved successfully! Restart the program to apply them.")
                     return redirect(url_for("dashboard"))
 
                 except Exception as e:
@@ -234,7 +269,6 @@ class Dashboard:
                 flash(f"Error clearing logs: {e}")
             return redirect(url_for("view_logs"))
 
-    # -------------------- STATISTICS HELPER --------------------
     def get_log_stats(self, log_path):
         allowed = blocked = 0
         try:

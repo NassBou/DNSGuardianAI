@@ -15,11 +15,10 @@ WHITELIST_FILE = os.path.join(CONFIG_DIR, "whitelist.txt")
 BLACKLIST_FILE = os.path.join(CONFIG_DIR, "blacklist.txt")
 LOG_FILE = os.path.join(CONFIG_DIR, "queries.log")
 
-
-
 class FilteringResolver(BaseResolver):
-    def __init__(self,filtering_enabled:bool, model: str, api_url: str, threshold: int, port: int, upstream_dns: str):
+    def __init__(self, filtering_enabled:bool, list_only_filtering_enabled:bool, model: str, api_url: str, threshold: int, port: int, upstream_dns: str):
         self.filtering_enabled = filtering_enabled
+        self.list_only_filtering_enabled = list_only_filtering_enabled
         self.analyser = DomainAnalyser(
             model=model,
             api_url=api_url,
@@ -59,6 +58,14 @@ class FilteringResolver(BaseResolver):
             reply.header.rcode = 3  # NXDOMAIN
             self.log_query(qname, "block")
             return reply
+     
+        #If list only filtering is enabled now you can forward the domain
+        if self.list_only_filtering_enabled:
+            print(f"[LIST-ONLY MODE] {qname} not found in lists — forwarding")
+            self.log_query(qname, "allow")
+            return self.forward(request)
+
+        #-------------------------FURTHER ANALYSIS-------------------------
 
         # Prevent duplicate concurrent analysis
         with self.lock:
@@ -67,8 +74,8 @@ class FilteringResolver(BaseResolver):
                 reply = request.reply()
                 reply.header.rcode = 2  # SERVFAIL
                 return reply
-            else:
-                self.in_progress.add(base_qname)
+            self.in_progress.add(base_qname)
+
 
         try:
             analysis = self.analyser.analyse(base_qname)
