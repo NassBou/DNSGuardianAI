@@ -11,6 +11,9 @@ CONFIG_DIR = os.path.join(BASE_DIR, "config")
 LOG_FILE = os.path.join(CONFIG_DIR, "queries.log")
 WHITELIST_FILE = os.path.join(CONFIG_DIR, "whitelist.txt")
 
+
+#-----------------------HTML TEMPLATES-----------------------
+
 TEMPLATE = """
 <!doctype html>
 <html>
@@ -198,23 +201,31 @@ LOG_TEMPLATE = """
 <a href="{{ url_for('dashboard') }}">← Back to Settings</a>
 """
 
+#-----------------------MAIN FLASK DASHBOARD CLASS-----------------------
+
 class Dashboard:
     def __init__(self):
         self.app = Flask(__name__)
         self.app.secret_key = 'dev'
         self._setup_routes()
+
+        # Suppress Werkzeug logging for cleaner output
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
 
+#-----------------------ROUTE SETUP-----------------------
+
     def _setup_routes(self):
         @self.app.route("/", methods=["GET", "POST"])
+        
+#-----------------------DASHBOARD ROUTE-----------------------        
         def dashboard():
             config = load_config()
             config.setdefault("blacklist_urls", [])
             stats = self.get_log_stats(LOG_FILE)
-
             if request.method == "POST":
                 try:
+                    #Update config settings
                     config["filtering_enabled"] = "filtering_enabled" in request.form
                     config["advanced_analysis_enabled"] = "advanced_analysis_enabled" in request.form
                     config["model"] = request.form["model"]
@@ -251,6 +262,7 @@ class Dashboard:
 
             return render_template_string(TEMPLATE, config=config, stats=stats)
 
+#-----------------------VIEW LOGS ROUTE-----------------------
         @self.app.route("/logs")
         def view_logs():
             try:
@@ -260,6 +272,7 @@ class Dashboard:
                 lines = ["Log file not found."]
             return render_template_string(LOG_TEMPLATE, logs=lines)
 
+#-----------------------CLEAR LOG FILE ROUTE-----------------------
         @self.app.route("/refresh_logs", methods=["POST"])
         def refresh_logs():
             flash("Logs refreshed.")
@@ -273,6 +286,9 @@ class Dashboard:
             except Exception as e:
                 flash(f"Error clearing logs: {e}")
             return redirect(url_for("view_logs"))
+
+
+#-----------------------HELPERS-----------------------
 
     def get_log_stats(self, log_path):
         allowed = blocked = 0
