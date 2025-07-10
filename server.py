@@ -8,7 +8,7 @@ from threading import Thread
 from blacklist_updater import BlacklistUpdater
 
 if __name__ == "__main__":
-    # Load all config values
+# ----------------- LOAD ALL CONFIG VALUES ----------------- 
     filtering_enabled = config["filtering_enabled"]
     list_only_filtering_enabled = not(config["advanced_analysis_enabled"])
     model = config["model"]
@@ -18,16 +18,16 @@ if __name__ == "__main__":
     threshold = config["broken_link_threshold"]
     blacklist_urls = config["blacklist_urls"]
 
-    #Update lists
+# ----------------- UPDATE LISTS ---------------------------
     for blacklist_url in blacklist_urls:
         updater = BlacklistUpdater(blacklist_url)
         updater.update()
         
 
-    # Launch dashboard
+# ----------------- LAUNCH DASHBOARD ----------------------
     Thread(target=lambda: Dashboard().start(), daemon=True).start()
 
-    # Pass all necessary values to FilteringResolver
+# ----------------- START THE SERVER ----------------------
     resolver = FilteringResolver(filtering_enabled=filtering_enabled, list_only_filtering_enabled=list_only_filtering_enabled, model=model, api_url=api_url, threshold=threshold, port=port, upstream_dns=upstream_dns)
     server = DNSServer(resolver, port=port)
     print("""
