@@ -128,8 +128,8 @@ TEMPLATE = """
     </div>
 
     <div>
-      <label><strong>Broken Link Threshold:</strong></label><br>
-      <input name="broken_link_threshold" type="number" value="{{ config.broken_link_threshold }}">
+      <label><strong>Block Score Threshold:</strong></label><br>
+      <input name="block_score" type="number" value="{{ config.block_score }}">
     </div>
 
     <div style="grid-column: span 2;">
@@ -234,7 +234,7 @@ class Dashboard:
                     config["dashboard_port"] = int(request.form["dashboard_port"])  # New line
                     config["upstream_dns"] = request.form["upstream_dns"]
                     config["dns_listen_address"] = request.form["dns_listen_address"]
-                    config["broken_link_threshold"] = int(request.form["broken_link_threshold"])
+                    config["block_score"] = int(request.form["block_score"])
 
                     new_url = request.form.get("new_blacklist_url", "").strip()
                     if new_url and new_url not in config["blacklist_urls"]:

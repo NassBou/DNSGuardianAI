@@ -1,140 +1,106 @@
-# filtering_resolver.py
-
-from dnslib import DNSRecord
 from dnslib.server import BaseResolver
-import socket
-import time
-import threading
+from dnslib import DNSRecord
 from domain_analyser import DomainAnalyser
-import os
+import socket, threading, time, os
+
+from lists import (
+    WHITELIST_USER, BLACKLIST_USER,
+    WHITELIST_AUTO, BLACKLIST_AUTO
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
-
-WHITELIST_FILE = os.path.join(CONFIG_DIR, "whitelist.txt")
-BLACKLIST_FILE = os.path.join(CONFIG_DIR, "blacklist.txt")
 LOG_FILE = os.path.join(CONFIG_DIR, "queries.log")
 
+
 class FilteringResolver(BaseResolver):
-    def __init__(self, filtering_enabled:bool, list_only_filtering_enabled:bool, model: str, api_url: str, threshold: int, upstream_dns: str):
+    def __init__(self, filtering_enabled, list_only_filtering_enabled,
+                 model, api_url, block_score, upstream_dns):
         self.filtering_enabled = filtering_enabled
-        self.list_only_filtering_enabled = list_only_filtering_enabled
-        self.analyser = DomainAnalyser(
-            model=model,
-            api_url=api_url,
-            threshold=threshold
-        )
-        self.port = 53
-        self.upstream_dns = upstream_dns 
-        self.in_progress = set()
+        self.list_only = list_only_filtering_enabled
+        self.analyser = DomainAnalyser(model, api_url, block_score)
+        self.upstream = (upstream_dns, 53)
         self.lock = threading.Lock()
-        self.DNS = (self.upstream_dns,self.port)
+        self.in_progress = set()
 
     def resolve(self, request, handler):
         qname = str(request.q.qname).rstrip('.').lower()
+        base = qname.lstrip("www.")
 
-# ----------------- CHECK IF FORWARD ONLY MODE IS ON -----------------
+        # ---------- Forward-only mode ----------
         if not self.filtering_enabled:
-            print(f"[FORWARD ONLY MODE] {qname}")
-            return self.forward(request)
-# ----------------- IF FORWARD ONLY MODE IS ON STOP HERE -----------------
-        
-        if qname.endswith(".in-addr.arpa"):
-            self.log_query(qname, "allow")
             return self.forward(request)
 
-        base_qname = qname.lstrip("www.")
+        # ---------- Load lists ----------
+        user_whitelist = self._load(WHITELIST_USER)
+        user_blacklist = self._load(BLACKLIST_USER)
+        auto_whitelist = self._load(WHITELIST_AUTO)
+        auto_blacklist = self._load(BLACKLIST_AUTO)
 
-        whitelist = self.load_whitelist()
-        blacklist = self.load_blacklist()
-
-        if base_qname in whitelist:
-            print(f"[WHITELIST] {base_qname} is whitelisted.")
-            self.log_query(qname, "allow")
+        # ---------- Resolution priority ----------
+        if base in user_whitelist:
+            self._log(qname, "allow (user whitelist)")
             return self.forward(request)
 
+        if base in user_blacklist:
+            self._log(qname, "block (user blacklist)")
+            return self._block(request)
 
-        if base_qname in blacklist:
-            print(f"[BLACKLIST] {base_qname} is blacklisted — blocking immediately.")
-            reply = request.reply()
-            reply.header.rcode = 3
-            self.log_query(qname, "block")
-            return reply
-     
-        if self.list_only_filtering_enabled:
-            print(f"[LIST-ONLY MODE] {qname} not found in lists — forwarding")
-            self.log_query(qname, "allow")
+        if base in auto_whitelist:
+            self._log(qname, "allow (auto whitelist)")
             return self.forward(request)
-# -------- IF FORWARD LIST-ONLY MODE MODE IS ON STOP HERE ---------
-        
 
-#------------------------FURTHER ANALYSIS-------------------------
+        if base in auto_blacklist:
+            self._log(qname, "block (auto blacklist)")
+            return self._block(request)
 
-        #Prevent duplicate concurrent analysis
+        # ---------- List-only mode ----------
+        if self.list_only:
+            self._log(qname, "allow (list-only)")
+            return self.forward(request)
+
+        # ---------- Prevent duplicate analysis ----------
         with self.lock:
-            if base_qname in self.in_progress:
-                print(f"[SKIP] Analysis already in progress for {base_qname}")
+            if base in self.in_progress:
                 reply = request.reply()
                 reply.header.rcode = 2
                 return reply
-            self.in_progress.add(base_qname)
+            self.in_progress.add(base)
+
         try:
-            analysis = self.analyser.analyse(base_qname)
+            result = self.analyser.analyse(base)
         finally:
-            with self.lock:
-                self.in_progress.discard(base_qname)
+            self.in_progress.remove(base)
 
-        if analysis["verdict"] == "block":
-            reply = request.reply()
-            reply.header.rcode = 3
-            print(f"[BLOCKED] {base_qname} - {analysis['reason']}")
-            self.log_query(qname, "block")
-            return reply
+        if result.get("verdict") == "block":
+            self._log(qname, "block (analysis)")
+            return self._block(request)
 
-        elif analysis["verdict"] == "allow":
-            print(f"[ALLOWED] {base_qname} - {analysis['reason']}")
-            self.log_query(qname, "allow")
-            return self.forward(request)
+        self._log(qname, "allow (analysis)")
+        return self.forward(request)
 
-        else:
-            reply = request.reply()
-            reply.header.rcode = 3
-            print(f"[BLOCKED DEFAULT] {base_qname} - Unexpected verdict")
-            self.log_query(qname, "block")
-            return reply
+    # ---------- Helpers ----------
 
-#------------------------- DNS FORWARDING -------------------------
     def forward(self, request):
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(request.pack(), self.DNS)
-            data, _ = sock.recvfrom(4096)
-            return DNSRecord.parse(data)
-        except Exception as e:
-            print("Upstream error:", e)
-            reply = request.reply()
-            reply.header.rcode = 2
-            return reply
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.sendto(request.pack(), self.upstream)
+        data, _ = sock.recvfrom(4096)
+        return DNSRecord.parse(data)
 
-#------------------------- LOGGING -------------------------
-    def log_query(self, qname, verdict):
-        try:
-            with open(LOG_FILE, "a") as f:
-                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {qname} - {verdict}\n")
-        except Exception as e:
-            print(f"[LOGGING ERROR] Failed to log {qname}: {e}")
+    def _block(self, request):
+        reply = request.reply()
+        reply.header.rcode = 3  # NXDOMAIN
+        return reply
 
-
-    def load_whitelist(self):
+    def _load(self, path):
         try:
-            with open(WHITELIST_FILE) as f:
+            with open(path) as f:
                 return set(line.strip().lower() for line in f if line.strip())
         except FileNotFoundError:
             return set()
 
-    def load_blacklist(self):
-        try:
-            with open(BLACKLIST_FILE) as f:
-                return set(line.strip().lower() for line in f if line.strip())
-        except FileNotFoundError:
-            return set()
+    def _log(self, qname, verdict):
+        with open(LOG_FILE, "a") as f:
+            f.write(
+                f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {qname} - {verdict}\n"
+            )

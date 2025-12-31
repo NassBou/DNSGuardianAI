@@ -16,106 +16,81 @@ class BlacklistUpdater:
         self.local_file = local_file
         self.whitelist_file = whitelist_file
 
-#-----------------------EXTRACT DOMAIN FROM BLACKLIST LINE-----------------------
-    def extract_domain(self, line):
+    #  NEW — Validate AdGuard-style rules (filter only useful ones)
+    def is_valid_rule(self, line):
         line = line.strip()
-        
-        if not line or line.startswith(('!', '#', '@@')):
-            return None
-            
-        if line.startswith('||'):
-            line = re.split(r'[\^/]', line[2:])[0]
-            
-        elif line.startswith(('0.0.0.0', '127.0.0.1')):
-            parts = line.split()
-            if len(parts) > 1:
-                line = parts[1]
-            else:
-                return None
+        if not line or line.startswith('!') or '##' in line or '#@#' in line:
+            return False
+        return True
 
-        if '*' in line or line.endswith(('.local', '.lan', '.internal', '.invalid')):
-            return None
-            
-        if re.match(r'^(?!\-)([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,}$', line):
-            return line.lower()
-
-        return None
-
-#-----------------------FETCH BLACKLIST FROM REMOTE SOURCE-----------------------
-    def fetch_remote_domains(self):
-        print(f"Fetching blacklist from {self.blacklist_url}...")
+    #  MODIFIED — Don't reduce rules to domains, keep raw filter rules
+    def fetch_remote_rules(self):
+        print(f"Fetching rules from {self.blacklist_url}...")
         try:
             response = requests.get(self.blacklist_url, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
-            print(f"Error downloading blacklist: {e}")
+            print(f"Error downloading rules: {e}")
             return set()
 
-        domains = set()
+        rules = set()
         for line in response.text.splitlines():
-            domain = self.extract_domain(line)
-            if domain:
-                domains.add(domain)
-        return domains
+            if self.is_valid_rule(line):
+                rules.add(line.strip())
+        return rules
 
-#-----------------------LOAD LOCAL BLACKLIST-----------------------
-    def load_local_domains(self):
+    #  MODIFIED — load full rules, not just domains
+    def load_local_rules(self):
         if not os.path.exists(self.local_file):
             return set()
 
         with open(self.local_file, 'r') as f:
-            return set(line.strip().lower() for line in f if line.strip())
+            return set(line.strip() for line in f if line.strip())
 
-#-----------------------LOAD WHITELIST-----------------------
-    def load_whitelist_domains(self):
+    def load_whitelist_rules(self):
         if not os.path.exists(self.whitelist_file):
             return set()
 
         with open(self.whitelist_file, 'r') as f:
-            return set(line.strip().lower() for line in f if line.strip())
+            return set(line.strip() for line in f if line.strip())
 
-#-----------------------SAVE NEW DOMAINS TO BLACKLIST-----------------------
-    def save_new_domains(self, new_domains):
-        if not new_domains:
-            print("No new domains to add.")
+    def save_new_rules(self, new_rules):
+        if not new_rules:
+            print("No new rules to add.")
             return
 
         with open(self.local_file, 'a') as f:
-            for domain in sorted(new_domains):
-                f.write(domain + '\n')
+            for rule in sorted(new_rules):
+                f.write(rule + '\n')
 
-        print(f"Added {len(new_domains)} new domains to {self.local_file}.")
+        print(f"Added {len(new_rules)} new rules to {self.local_file}.")
 
-#-----------------------ADD DOMAINS TO WHITELIST FILE-----------------------
-    def add_to_whitelist(self, domains):
-        """
-        Adds new domains to the whitelist file, avoiding duplicates.
-        """
-        if not domains:
-            print("No domains provided.")
+    def add_to_whitelist(self, rules):
+        if not rules:
+            print("No rules provided.")
             return
 
-        existing = self.load_whitelist_domains()
-        new = set(self.extract_domain(d) for d in domains)
-        new = set(d for d in new if d) - existing
+        existing = self.load_whitelist_rules()
+        new = set(rules) - existing
 
         if not new:
-            print("No new whitelist domains to add.")
+            print("No new whitelist rules to add.")
             return
 
         with open(self.whitelist_file, 'a') as f:
-            for domain in sorted(new):
-                f.write(domain + '\n')
+            for rule in sorted(new):
+                f.write(rule + '\n')
 
-        print(f"Added {len(new)} new domains to {self.whitelist_file}.")
+        print(f"Added {len(new)} new rules to {self.whitelist_file}.")
 
-#-----------------------MAIN UPDATE FUNCTION-----------------------
+    #  MODIFIED — operate on rules instead of just domains
     def update(self):
-        remote_domains = self.fetch_remote_domains()
-        local_domains = self.load_local_domains()
-        whitelist_domains = self.load_whitelist_domains()
+        remote_rules = self.fetch_remote_rules()
+        local_rules = self.load_local_rules()
+        whitelist_rules = self.load_whitelist_rules()
 
-        # Only add domains that are not in local blacklist or whitelist
-        filtered_new_domains = remote_domains - local_domains - whitelist_domains
+        # Remove already known or whitelisted rules
+        filtered_new_rules = remote_rules - local_rules - whitelist_rules
 
-        self.save_new_domains(filtered_new_domains)
+        self.save_new_rules(filtered_new_rules)
+
