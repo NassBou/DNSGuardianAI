@@ -26,7 +26,4 @@
       }
     }
   },
-  "model": "DeepSeek-R1-Distill-Qwen-14B",
-  "api_url": "",
-  "dns_listen_address": "51"
 }
